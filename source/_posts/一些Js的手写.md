@@ -325,6 +325,40 @@ module.exports = Promise;
 // 测试命令:promises-aplus-tests promise.js
 ```
 
+### 手写async/await
+```javascript
+const fetchData = () => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve(123);
+        }, 5000);
+    });
+};
+
+// 手写原理 async = Generate函数 + Promise递归解构,await = yield
+function myAsync(gen) {
+    const g = gen();
+    const step = (res) => {
+        const { value, done } = g.next(res); // 开始执行
+        if (!done) {
+            return Promise.resolve(value)
+                .then(step)
+                .catch((err) => g.throw(err)); // 如果还没结束,value应该为promise,用promise then
+        } else {
+            return value; // 如果
+        }
+    };
+    return Promise.resolve().then(step);
+}
+
+function* testFetch() {
+    const x = yield fetchData();
+    const y = yield fetchData();
+    console.error('手写返回数据', x, y);
+}
+myAsync(testFetch); // = 直接运行asyn/await版本的testFetch
+```
+
 ### 手写ajax
 
 ```javascript
