@@ -327,36 +327,79 @@ module.exports = Promise;
 
 ### 手写async/await
 ```javascript
+// 手写原理 async = Generate函数 + Promise递归解构,await = yield
+function myAsync(gen) {
+    return function () {
+        return new Promise((resolve, reject) => {
+            const g = gen.apply(this, arguments)
+
+            // key是next还是throw决定是否继续往下执行(因为理论上await中任何一步的promise是reject的话整个async函数应该reject了)
+            // res是之前yield后面那个函数的执行结果
+            const step = (key, res) => {
+                let genResult;
+                try {
+                    genResult = g[key](res);
+                } catch(err) {
+                    return reject(err);
+                }
+                const { value, done } = genResult;
+                if (done) {
+                    // 结束了则直接resolve
+                    return resolve(value);
+                } else {
+                    // 这里表示yeild中断执行了,value就是yeild后面那个函数执行的结果,一般讲大概率是promise
+                    // 用Promise.resolve两个原因
+                    // 1. 兼容value为非promise的情况
+                    // 2. 即使value里返回的是reject的promise,也需要再执行一次这个回调函数,因为说不定后续有try catch抓住了
+                    return Promise.resolve(value).then((res) => step('next', res), (err) => step('throw', err))
+                }
+            }
+            step('next');
+        }) 
+    }
+}
+```
+```javascript
+// 手写async测试
 const fetchData = () => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            resolve(123);
-        }, 5000);
+            resolve('success');
+        }, 2000);
     });
 };
-
-// 手写原理 async = Generate函数 + Promise递归解构,await = yield
-function myAsync(gen) {
-    const g = gen();
-    const step = (res) => {
-        const { value, done } = g.next(res); // 开始执行
-        if (!done) {
-            return Promise.resolve(value)
-                .then(step)
-                .catch((err) => g.throw(err)); // 如果还没结束,value应该为promise,用promise then
-        } else {
-            return value; // 如果
-        }
-    };
-    return Promise.resolve().then(step);
+const fetchDataWithError = () => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            reject(new Error('错误测试'));
+        }, 2000);
+    })
 }
-
-function* testFetch() {
-    const x = yield fetchData();
+function* myAsyncFetch(num) {
+    console.error('同步执行', num)
+    try {
+        const x = yield fetchDataWithError();
+    } catch(err) {
+        console.error('捕获到错误', err);
+    }
+    console.error('后续继续执行');
     const y = yield fetchData();
-    console.error('手写返回数据', x, y);
+    console.error('myAsyncFetch执行完毕', y);
 }
-myAsync(testFetch); // = 直接运行asyn/await版本的testFetch
+myAsync(myAsyncFetch)(123); // 手写运行结果
+// async function asyncFetch(num) {
+//     console.error('同步执行', num)
+//     try {
+//         const x = await fetchDataWithError();
+//     } catch(err) {
+//         console.error('捕获到错误', err);
+//     }
+//     console.error('后续继续执行');
+//     const y = await fetchData();
+//     console.error('asyncFetch执行完毕', y);
+// }
+// asyncFetch(123); // 正确答案
+console.error('同步执行', 456);
 ```
 
 ### 手写ajax
