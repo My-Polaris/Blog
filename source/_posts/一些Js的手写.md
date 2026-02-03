@@ -122,6 +122,7 @@ function deepClone(target,weakMap = new WeakMap()){
 
 ```javascript
 function newObj(Fn,...args){
+    // 基本等价于obj = {} + obj.__proto__ = Fn.prototype
     let obj = Object.create(Fn.prototype)
     // 调用构造函数,注意这个调用会有返回值,构造函数也有可能内部有return语句返回乱七八糟的值
     const result = Fn.call(obj,...args)
@@ -145,7 +146,7 @@ function Child(name,age,sex){
     this.sex = sex
 }
 Child.prototype = Object.create(Parent.prototype)
-Child.prototype.constructor = Child
+Child.prototype.constructor = Child; // 这一步的原因是，上一步把Child.prototype指向了一个空对象，导致原本默认Child.prototype.constructor丢失了，需要补上
 ```
 
 ### 用reduce实现map
