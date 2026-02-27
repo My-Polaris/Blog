@@ -440,6 +440,108 @@ console.log(isValid("({[}])"))
 - 工作中更多的是软性能力，在沟通、讲清背景收益、汇报、写文档等，硬能力更多靠自己业务学
 反问环节，问了下面评，说总体觉得还行，前面项目介绍的挺清楚的，虽然技术栈和微信域差异挺大的，但只要不排斥就还行；还问了下跨地区沟通，是否应该选择北京base，他说倒还好，长期发展会建议北京，因为人大多都在这边。（面试官问问题的时候会笑笑，但冷脸的时候感觉还蛮吓人的）
 
+## 2026.2.27 字节一面（tiktok广告技术）
+1. 简单介绍下故障预防做了哪些事、还有聊天室场景那个项目做了哪些事
+2. vue响应式，以vue2为例，整个流程是怎样，$.set做了什么事，什么时候订阅什么时候会发布，Vue的响应式相对比React有什么优势，$.set里面具体做了什么
+- Vue2响应式原始的痛点是对象的新增属性，数组元素内容的变化和数组长度变化无法被监听，而$.set则专门对此处理，识别target为数组则用splice方法触发更新，为对象则判断其是否为响应式对象，非响应式对象则无需特殊处理，为响应式对象判断是否已存在key，已存在正常更新就好了，不存在则用defineProperty来增加响应式属性
+- Vue响应式的优点在于自动更新视图，而React则需要给予setState这样的hook去手动更新视图，且Vue只更新对应的dom节点，而React更新整个组件（但是两者性能上没差别，无论是局部更新还是直接触发组件更新，最终都会走diff算法去更新局部dom元素）
+3. 浏览器渲染的时候做了什么事，async script会defer script怎么执行的
+4. 宏任务微任务的题，说出打印顺序
+5. js异步调度器
+6. 手写lodash的防抖，有取消能力和立即执行入参
+反问环节直接问面评，代码能力没问题，但是面经八卦背的不是特别熟，但影响不是很大
+
+## 2026.3.3 百度一面
+1. 简单讲下故障预防的项目
+2. 手写一个防抖，为什么要用call去执行func
+- 因为obj.func = debounce(testFn, 300);且testFn有console.log(this.a)的时候，这个this要指向obj
+3. 题目二：bind指向
+```javascript
+const obj1 = {
+  name: 1,
+}
+const obj2 = {
+  name: 2,
+}
+function Test() {
+  console.log(this.name);
+}
+const func = Test.bind(obj1)
+func();
+func.call(obj2);
+func.apply(obj2);
+```
+- call和apply的本质是，给代理的对象加一个临时属性，让临时属性值为这个函数，然后执行
+- bind就是产生一个函数，这个函数执行的时候去调call
+- 所以相当于func = () => {return Test.call(func)}，这个时候即使obj2.func，执行结果也与obj2无关，所以输出是111
+4. 题目三：原型
+```javascript
+function Test() {
+    this.a = 1;
+    return {a: 2, b:3}
+}
+Test.prototype.a = 4;
+Test.prototype.b = 5;
+Test.prototype.c = 6;
+const ins = new Test();
+console.log(ins.a);
+console.log(ins.b);
+console.log(ins.c);
+```
+- new本质是创建一个空对象，让空对象用call的方式执行构造函数，并且让对象的__proto__指向构造函数的prototype，所以是2，3，6？不对，核心在于「构造函数有返回值就用构造函数返回值，没有就返回创建的空对象」，上述代码中函数返回值是一个全新对象，所以是访问不到Test.prototype的，要看仔细。
+5. 题目四：浏览器事件队列执行顺序，async和await和Promise是什么关系，await后面跟同步函数的话，在任务队列里是怎样的
+- 如果是同步函数的话，会用Promsie.resolve包裹作为返回值
+6. js判断数据类型的方法有哪些
+- typeof、instance of、Object.prototype.toString.call方法（面试官补充还有Array.isArray这种）
+7. webpack和vite的热更新原理,webpack的loader和plugin分别是啥
+8. 题目五：数组组合
+```javascript
+// 输入示例：[1,2,3,4,5,6,7], 8
+// 输出示例：[[1,7],[2,6],[3,5]]
+
+const findValue1 = (arr, val) => {
+    const n = arr.length;
+    const result = [];
+    arr.sort((a,b) => a-b);
+    for(let i=0;i<n;i++) {
+        for(let j=i;j<n;j++) {
+            if(i==j)    continue;
+            if (arr[i] + arr[j] === val) result.push([arr[i], arr[j]]);
+        }
+    }
+    return result;
+}
+// console.log(findValue1([5,4,3,2,1,6,7], 8))
+
+// 拓展
+// 输入示例：[1,2,3,4,5,6,7], 8
+// 输出所有能组合出8的集合，[1,2,5]和[5,2,1]算同一个
+const main = (arr,val) => {
+    const n = arr.length;
+    const visits = new Array(n).fill(0);
+    arr.sort((a,b) => a-b);
+    const findValue2 = (startIndex, target) => {
+        const result = [];
+        if (target < 0)    return result;
+        for(let i=startIndex;i<n;i++) {
+            if (visits[i])  continue;
+            const diff = target - arr[i];
+            if (diff === 0)   result.push(arr[i])
+            visits[i] = 1;
+            const res = findValue2(i, diff);
+            visits[i] = 0;
+            res.forEach(x => {
+                if (x.length)   result.push([arr[i], ...x]);
+                else    result.push([arr[i], x]);
+            })
+        }
+        return result;
+    }
+    return findValue2(0, val);
+}
+console.log(main([5,4,3,2,1,6,7,8,9,10,11,12], 15))
+```
+
 ## thinking
 收到offer后，了解清楚团队架构、薪资结构、福利待遇等等，然后直接接或者思考一两天后接
 然后入职时间尽量往后推，可以用办理离职、工作交接、把公司年假休完等等原因，期间可以继续面试，然后有成的就继续接，尽量在「完全确定」后或者「完成一家公司的入职」后才做反悔的动作，反悔的时候用「个人职业规划需要重新考虑机会(比如创业或休息一段时间之类的)+希望未来还能有机会共事，保持联系」或者「临时收到了另一家公司的offer+个人职业规划考量+后续会推荐更合适的人选」
