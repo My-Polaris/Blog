@@ -1,0 +1,811 @@
+---
+title: 2026面经
+date: 2026-01-13 18:00:00
+tags: 前端
+---
+
+26年初开始的一波面试经历、此时两年半的工作经历
+
+<!--more-->
+
+## 2026.1.12 阿里淘天一面（88VIP团队）
+1. 手写节流防抖
+2. https链接正则识别,比如完整识别https://www.baidu.com/path?x=1
+3. 事件循环的一道题
+问简历项目-CR规则生成工具
+
+## 2026.1.13 阿里千问一面
+全程问简历：稳定性部分的问题没毛病，但是我的性能基础太薄弱了，需要恶补
+- 有没有观测过项目的一些指标
+- RN和React的差别
+- 如果后端的接口速度不满足你的要求，有没有想过能怎样去优化
+- 了解过SSR的运作流程吗
+- LCP了解过吗
+- 有没有观测过你模块的性能，怎么做性能优化呢
+
+## 2026.1.21 小红书一面
+问简历：公会架构、聊天室场景的实现
+- 故障预防除了ESLint插件还做了哪些事 —— 智能CR、SDK插件等
+- 公会现状架构有什么其他痛点 —— 全局弹窗、基座与子应用双包(组件库、Vue等)
+- 基座和子应用通信的方式都有哪些 —— single-spa能力、window、customEvent
+- 实现扁平化方法，支持层级参数，比如flatten(arr, 2)表示最多只解构两层
+
+## 2026.1.26 Presence(类海外探探)一面
+1. 实现Promise.allsettleed
+```javascript
+Promise.allsettled = (arr) => {
+    const result = [];
+    let cnt = 0;
+    return new Promise((resolve) => {
+        for(let i=0;i<arr.length;i++) {
+            arr?.().then((res) => {
+                result[i].value = res;
+                result[i].status = 'fulfilled';
+                cnt++;
+                if (cnt === arr.length) resolve(result);
+            }, (err) => {
+                result[i].value = err;
+                result[i].status = 'rejected';
+                cnt++;
+                if (cnt === arr.length) resolve(result);
+            })
+        }
+    })
+}
+```
+
+2. 版本号排序
+```javascript
+const versions = ["1.2.3", "1.2.10", "1.2", "1.0.2", "1.0"];
+const versionSort = (arr) => {
+    const n = arr.length;
+    return arr.sort((a,b) => {
+        const versionsA = a.split('.');
+        const versionsB = b.split('.');
+        for(let i=0;i<3;i++) {
+            const a = Number(versionsA?.[i]) || 0;
+            const b = Number(versionsB?.[i]) || 0;
+            if (a === b)    continue;
+            else return a-b;
+        }
+    })
+}
+console.log(versionSort(versions)); // 输出: ['1.0', '1.0.2', '1.2', '1.2.3', '1.2.10']
+```
+
+3.写一个LazyMan
+```javascript
+const LazyMan = (name) => {
+    console.log(`Hi I am ${name}`);
+    let promise = Promise.resolve();
+    const obj = {
+        eat: (food) => {
+            promise.then(() => {
+                console.log(`I am eating ${food}`);
+            })
+            return obj;
+        },
+        sleep: (time) => {
+            promise = new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, time * 1000);
+            })
+            return obj;
+        },
+    }
+    return obj;
+}
+
+LazyMan('Tony');
+// Hi I am Tony
+ 
+LazyMan('Tony').sleep(10).eat('lunch');
+// Hi I am Tony
+// 等待了10秒...
+// I am eating lunch
+ 
+LazyMan('Tony').eat('lunch').sleep(10).eat('dinner');
+// Hi I am Tony
+// I am eating lunch
+// 等待了10秒...
+// I am eating diner
+```
+
+4. 括号字符串校验
+```javascript
+// 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串 s ，判断字符串是否有效。
+// 有效字符串需满足：
+// 1. 左括号必须用相同类型的右括号闭合。
+// 2. 左括号必须以正确的顺序闭合。
+// 3. 每个右括号都有一个对应的相同类型的左括号
+const isValid = (str) => {
+    const n = str.length;
+    if (n === 0)   return true;
+    if (n % 2 === 1)   return false;
+    const a = str[0];
+    const b = str[n-1];
+    if ((a==='(' && b===')') || (a==='[' && b===']') || (a==='{' && b==='}')){
+        const newStr = str.slice(1, n-1);
+        return vaildStr(newStr);
+    }   else return false;
+}
+console.log(isValid("({[]})")); // true
+console.log(isValid("({])"));
+console.log(isValid("({[}])"))
+```
+
+## 2026.1.27 阿里淘天一面（业务技术-RPO专场）
+1.前端类似于npm包，像树状，后端更多的是一些外置依赖，怎么让AI去完成整个仓库的理解 —— 比如有个支持读取依赖库代码的MCP工具，怎么设计这一整个工作流
+
+2.了解过code wiki、cursor等工具的设计原理吗
+
+3.MCP和Skill的差别，为什么需要SKill
+
+4.请求竞态是其中的一类问题，如何设计一个可插拔的方式去做问题上报
+
+5.笔试题
+
+  5.1 请写出一个函数，解析window.location.search
+
+  ```javascript
+  // 如?a=1&b=1&c.d=2
+  // 解析为{a:1,b:1,c:{d:2}}
+  function transferSearchToObj(str) {
+    const searchStr = str.includes('?') ? str.slice(1) : str;
+    const arr = searchStr.split('&');
+    const resultObj = {};
+    for (let i = 0; i < arr.length; i++) {
+   const item = arr[i];
+   if (item.includes('.')) {
+     const keys = item.split('.');
+     const firstKey = keys?.[0];
+     resultObj[firstKey] = transferSearchToObj(item.slice(firstKey.length + 1))
+   } else {
+     const [a, b] = item.split('=');
+     resultObj[a] = b;
+   }
+    }
+    return resultObj;
+  }
+  console.log(transferSearchToObj("?a=1&b=1&c.d=2"))
+  ```
+
+  5.2 国际化翻译。提供了A格式代码，请写出函数将其转化为B格式
+
+  ```javascript
+  // A
+  const A = {
+    hello: "你好",
+    page: {
+      home: "首页",
+      activity: "活动",
+      more: {
+        a: 1,
+        b: 2,
+        d: {
+          x: {
+            y: {
+              z: 2
+            }
+          }
+        }
+      }
+    }
+  }
+  // B
+  const B = {
+    hello: "你好",
+    "page.home": "首页",
+    "page.activity": "活动",
+    "page.more.a": 1,
+    "page.more.b": 2,
+    "page.more.d.x.y.z": 2
+  }
+  function flattenObj(obj) {
+    const result = {};
+    for (const key in obj) {
+      const value = obj[key];
+      if (value !== null && typeof value === 'object') {
+        const inObj = flattenObj(value);
+        for(const inKey in inObj) {
+          const inValue = inObj[inKey];
+          result[`${key}.${inKey}`] = inValue;
+        }
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+  console.log(flattenObj(A));
+  ```
+
+  5.3 真实电商场景模拟
+
+```javascript
+// 正在为某电商平台开发购物车页面。
+  // 平台支持多种优惠类型同时使用，但不同优惠之间存在互斥规则和叠加优先级。
+  // 你的任务是：根据用户选择的商品和可用优惠券，计算出订单的最低实付金额。
+  // 当前支持的优惠类型如下：
+  
+  // 满减券（FullReduction）
+  // 示例：满300减50
+  // 可与其他非互斥优惠叠加
+  
+  // 折扣券（Discount）
+  // 示例：9折
+  // 不能与满减券同时使用（互斥）
+  
+  // 包邮券（FreeShipping）
+  // 仅减免运费（固定运费为 ¥10）
+  // 可与任意优惠叠加
+  
+  // 注意：用户最多只能选择一种满减券或一种折扣券（二者互斥），但可以额外选择包邮券。
+  
+  const calculateMinPayment = (products, coupons) => {
+    // dfs，入参是已经用了的卷和现在的价格，函数功能是找到这个链路花的最少的钱
+    const dfs = (money, used) => {
+      let minMoney = money;
+      for(let i=0;i<coupons.length;i++) {
+        const item = coupons[i];
+        if (used.find(x => x.type === item.type)) continue;
+        if (item.type === 'discount' && !used.find(x => x.type === 'full_reduction')) {
+          // 满减卷
+          const nextMoney = money * 0.9;
+          minMoney = Math.min(minMoney, dfs(nextMoney, used.concat(item)));
+        }
+        if (item.type === 'full_reduction' && !used.find(x => x.type === 'discount')) {
+          // 折扣卷
+          const nextMoney = money - item.amount * Math.floor(money / item.threshold);
+          minMoney = Math.min(minMoney, dfs(nextMoney, used.concat(item)));
+        }
+        if (item.type === 'free_shipping') {
+          // 包邮卷
+          const nextMoney = money - products.length * 10;
+          minMoney = Math.min(minMoney, dfs(nextMoney, used.concat(item)));
+        }
+      }
+      return minMoney;
+    }
+    const totalPrice = products.reduce((a,b) => a?.price * a.quantity + b.price * b.quantity, {
+      price: 0,
+      quantity: 0,
+    }) + products.length * 10;
+    return dfs(totalPrice, []);
+  }
+  
+  // // 示例1:
+  // const products = [
+  //   { price: 100, quantity: 2 }, // 总价 200
+  //   { price: 150, quantity: 1 }  // 总价 150 → 合计 350
+  // ];
+  
+  // const coupons = [
+  //   { type: 'full_reduction', threshold: 300, amount: 50 },
+  //   { type: 'discount', amount: 0.9 },
+  //   { type: 'free_shipping' }
+  // ];
+  
+  // console.log(calculateMinPayment(products, coupons));
+  // // 方案1: 满300减50 + 包邮 → (350 - 50) + 0 = 300
+  // // 方案2: 9折 + 包邮 → 350 * 0.9 + 0 = 315
+  // // 最优为 300.00
+  
+  
+  // 示例2:
+  const products = [{ price: 50, quantity: 1 }]; // 总价 50
+  const coupons = [
+    { type: 'full_reduction', threshold: 100, amount: 20 },
+    { type: 'free_shipping' }
+  ];
+  console.log(calculateMinPayment(products, coupons));
+  // 满减不满足门槛，只能用包邮
+  // 实付 = 50 + 0 = 50.00
+```
+
+## 2026.2.3 京东一面（京东小程序）
+1. 个人职业规划，使用AI的经验，有没有用过cursor、Skills和rule、RAG工作原理、是vibe coding还是spec coding、新仓库怎么让AI按照团队的代码规范进行coding、大模型应用的温度是什么原理
+2. 挑一个项目讲，我讲了竞态，诊断与治理，axios拦截器、Proxy方案等，然后我提到洋葱模型他反问了下洋葱模型是什么数据结构实现的，是不是能直接使用reduce能实现，我说能
+- 这里axios的实现应该是，数组存所有拦截器，然后请求拦截器unshift进去，响应拦截器push进去，最后用reduce串成promise链
+- 还问到为什么要用Reflect，Reflect本质是提供原生的调用，避免副作用
+3. 笔试题,二选一实现
+```javascript
+// ## 题目一：
+// 给定一个 没有重复 数字的序列，返回其所有可能的全排列。
+
+// 示例:
+
+// 输入: [1,2,3]
+// 输出: [ [1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1] ]
+
+// ## 题目二：
+// 利用 Promise 使用 Promise.all
+```
+4. 反问环节直接问面评：整体没什么问题，竞态项目的表述不够清晰、他觉得业内应该有一些成熟的方案、AI方面多了解快手内Kwaipilot的和cursor、Claude Code啥的对标能力
+个人体验：面试官基本全程面瘫+苦脸，跟阿里淘天的业务技术有点像，给人感觉就是挂定你了
+
+## 2026.2.4 百度一面（百度文库）
+总体比较快，就35分钟的样子
+1. 问vue2和vue3的响应式区别
+2. 问简历的三个项目
+3. 一道笔试题：手写深拷贝
+4. 反问环节问面评：逻辑思维整体没问题，挺好的
+
+## 2026.2.4 京东二面（京东小程序）
+1. 讲一讲三个项目，以及分别有什么难点、复杂点、遇到过什么问题
+第一个项目：基于AI的CR能力增强
+- 背景：团队在做故障预防，我作为故障预防工作的主R，其中的一个方向是对同质性问题做预防避免二次发生。具体讲需要分为「经验沉淀」和「工具化」两个步骤，经验沉淀就是找到这些同质性问题，工具化则是以诸如ESLit插件或智能CR的方式预防住。
+- 挑战点：在项目初期我们通过人工review团队的CR内容和缺陷单找到这些同质性问题，但由于缺陷单仅有问题描述没有解决方案，大部分缺陷单看不懂，导致经验沉淀效率低，我们需要减少整件事的人力投入成本，提高效率。
+- 解决方案：基于AI实现了全链路的自动化。
+    - 刚才讲了核心链路是「经验沉淀」与「工具化」，在「经验沉淀」环节我们设计了AI规则生成工具，在「工具化」环节我们接入了司内智能CR，我们工具重点主要就在AI规则生成工具上。
+    - 然后我简单介绍一下这个规则生成工具，分为「核心原理」和「技术选型」。其核心原理是以commit的标题作为问题描述，commit内容作为解决方案，两者一起作为上下文给到AI，让AI生成智能CR的规则。技术选型上的话，工具经历了三个阶段的迭代，第一阶段是以MCP工具的形式存在，用户在本地通过问答，让Agent调用MCP工具，分析当前分支与master分支的差异，生成智能CR规则。第二阶段我们补充对历史MR的支持，用户输入MR链接，让AI去拉取MR详情进行规则生成。第三阶段也就是现在，工具的形式是一个自动化的工作流，每天会定时的指定仓库拉取昨日完成合并的MR，自动完成分析与规则生成，并生成报告，把规则上传到公司的智能CR规则库。
+    - 最后简单讲一下这个项目的收益，团队核心指标是看智能CR采纳率和拦截问题数，过程指标则是智能CR规则数，目前工具已经自动产生了70多条规则，团队的智能CR采纳率从30%提升到了接近60%，月拦截问题数达到了80+。
+- 遇到过什么问题：1. 生成规则效果差 —— 我们会分两种情况，一种是单点问题，这种情况我们需要对规则做单点优化，一种是规则生成的共性问题，这种需要通过调整提示词或优化工作流的方式，比如加入规则质检和去重等步骤；2. 自动化程度差，最开始的形式是本地MCP+自主提问，后续演变成线上的自动化工作流，再变成定时执行的工具。
+- 难点：工作流和提示词的设计与优化
+
+第二个项目：中后台聊天室场景建设
+- 背景：在直播聊天室场景中，给到中后台展示的直播流缺少上麦嘉宾的信息，比如有哪些嘉宾在麦上、头像、开闭麦状态、谁在说话等。根因是C端的这些展示是客户端代码绘制出来的，要保持一致的话B端也得画。
+- 挑战点：要完成B端的绘制工作，除了要复刻客户端的实现以外，还缺少充足的数据源。1. 不同于C端是客户端，B端是H5，天然缺少Native能力；2. 不同于C端只有直播，B端还需要支持回放。
+- 解决方案：解决方案分「绘制思路」和「数据源组合思路」。1.绘制上讲，聊天室直播下有7种细分场景，布局各有不同，可以按特征分为能开摄像头的不能开摄像头的，能开摄像头的，我们的绘制需要一比一与流内容对其，然后在某个嘉宾开摄像头的时候通过「挖孔」的方式把它的视频内容露出来，不能开摄像头的则只需要完全把流内容盖住，纯前端绘制布局就行了。2.数据源组合上需要四类数据源，第一类数据源是C端的直播实时数据（拿到直播基本数据），第二个是直播PB数据（补充非Native拿不到的数据），第三类是直播埋点数据（补充回放场景下的数据），第四类是业务数据（公会专属信息）。按照以上方案我们沉淀了复用物料，快速完成了4个平台的落地。
+- 遇到过什么问题：1.数据源可靠性问题，数据源大多是开播工具上报的，不同开播工具上报的形式或字段会有差异，或者是某些数据只在部分客户端版本以后才上报，或者是生产的数据在不同视频流压缩后会丢失，所以需要理清每个数据源的完整生产消费链路，做好兜底避免成为线上问题；2. 数据间的时差问题，比如直播类型数据比直播流快，提前切换绘制方式后和底流内容对不上，所以要明确好数据间是否有时差，有时差时先考虑能否用没有时差的字段做替换，实在没得换就做特殊兜底逻辑避免页面错乱。
+- 难点：这件事其实没有技术上的卡点，真正难的地方在于整个链路的清晰调研还有方案设计，因为是司内首例
+
+第三个项目：公会请求竞态问题
+> 先讲请求竞态问题是啥
+- 背景：公会请求竞态问题客诉频发，需要对100+页面300+接口做竞态诊断（偶现性）+治理。
+- 挑战点：传统方案成本太高，需要工具化提效。
+- 解决方案：设计请求竞态工具，在请求拦截层统一完成识别和治理。
+- 遇到过什么问题：1. 轮询场景可能导致饥饿，上一个请求未响应下一个请求已发出，导致始终在等。方案是维护最后一个请求发出的时间，响应时该请求的发出时间小于「最后一次响应的请求的请求发出时间则不响应」
+- 难点：诊断的特征提取，处理的多场景覆盖（忽略请求、顺序返回等）
+
+2. 故障预防除了智能CR还有哪些方面能做功
+- 故障预防是稳定性体系中的事前环节，在事前环节的每个环节都能做功。
+- 开发前：PRD可行性分析/风险评估、技术方案评审。
+- 开发中：ESLint插件、CDN容灾。
+- 提测前（静态）：人工/智能CR、性能检测、代码质量检测、安全准入。
+- 测试中（动态）：功能测试、性能测试、兼容性测试、降级测试、安全测试。
+- 上线前：上线计划、变更通知、审批、分级/灰度发布
+- 上线后：线上日志观测、报警
+3. Vue响应式原理、数组扁平化的思路
+4. 除了第一个项目还有什么AI的应用
+- 在日常业务中，会有Vibe Coding，也会有基于Skills让AI去做的case
+5. 反问环节问面评：一个是讲项目讲的不够清晰，一个是简历上体现最新技术的点比较少
+
+## 2026.2.6 百度二面（百度文库）
+1. 平时有没有写webpack或者vite配置
+- 基本没有，很少
+2. Vue函数式挂载组件怎么写？
+- let instance = createApp，instance.mount(某个元素),document.body.appendChild(某个元素);
+3. 用户信息怎么不被读取？
+- HttpOnly
+4. 怎么防止URL中脚本注入
+- 识别并过滤script标签
+5. 写一个函数，找到URL中某个key的值
+- new URL();
+6. 在用webpack写项目的时候，这个项目非常大，可能有很多路径的入口，怎么进行一个配置
+- 我直接没get到
+总结：考察的都是非常具体的知识，细到某个API长什么样，但是面试官的表述非常难评，这些问题都是我反复问几轮才确定她要问的是什么。最后24分钟就结束了，估计她觉得我不具备webpack的能力...
+
+## 2026.2.10 京东三面（微信域Leader）
+1. 智能CR这个事，怎么对知识库做的存储与查找
+- 有成熟基建，我们就是直接把规则给到他们的数据库，同时回答了RAG
+2. 故障预防还做了哪些事
+- 从研发流程各个阶段，做公司基建的接入，没有对应基建则做自己实现，比如性能准入、安全测试等
+3. 上线后灰度的观测怎么做的
+- 做px链路上报，自定义事件报警
+4. 报警策略怎么定
+- 看重要程度，核心链路可能有pv立刻上报，有些可能有符合预期的case则做一定的阈值提高
+5. 单测这个点，是测试给你们的单测吗，怎么做单测覆盖率
+- 没做单测覆盖率，方案只能想到给到PRD和单测规范，让AI做单测用例生成。（面试官回答说可以在执行位置坐行打点）
+6. 性能指标了解过吗，有哪些，分别有什么差别
+- FMP、FP、FCP、LCP、TTI
+7. FCP和LCP的差别
+- 加载vue元素就上报，渲染区域到达一定占比后才上报
+8. LCP会上报多次吗
+- 会（蒙的），每次有更大元素时就会再触发一次，以用户交互前的最后一次LCP为最终值
+8. 浏览器从输入到渲染完成发生了什么
+- DNS域名解析 -> 建立TCP链接 -> TLS握手 -> 请求资源 -> 响应资源 -> 渲染进程加载HTML（DOM树渲染、CSSOM树渲染，渲染树渲染）-> 加载js资源 -> 之后就是vue的执行逻辑了
+9. 做性能优化有哪些策略
+- 网络层：网络带宽、CDN、缓存与离线包、HTTP2.0
+- 资源大小层：图片webp、图片压缩、字体压缩、gzip、js资源压缩（terser、treeShaking）
+- 加载策略层：预请求、懒加载、按需加载、分包、SSR
+10. 你说到强缓存，哪些资源适合做强缓存，项目里是怎么做的强缓存
+- 除了HTML和JSON类外其他资源都适合做缓存，尤其是css资源、js资源、图片资源等，基建部署平台做的项目Owner不关注（我理解就是直接给资源加响应头Cache-Control就好了）
+11. 聊天室能力建设，面试官误解了聊天室的意思，问我聊天室怎么做
+12. 了解过直播推拉流的一些协议
+- 没有，都集成到成熟播放器基建内了
+13. 客户端怎么做的数据获取和页面适配
+- 数据获取我说是通过websocket，他说是从流里取的，我说因为流生产来源于很多开播工具，所有只要用的是信令数据，流数据是做辅助（是否打开摄像头），他说要从流里取分辨率啥的
+- 页面适配我理解是用vwvh、rem等方式做的宽度适配吧(这里面试官应该是想问下从哪拿到的分辨率)
+14. 微前端架构你有了解吗，都怎么做的沙箱
+- 了解single-spa，qiankun、wujie，沙箱基于shadow dom、也有基于iframe的
+
+面评：
+1. 对于一些高可用架构设计接触的比较少，全局视野的一些缺失，更多的是专注在自己那一块，比如对页面渲染流程有些点接触的不够深入，直播推拉流协议的不了解等
+2. 本身vue技术栈+PC的组合在市场的需求比较少，市场更多的需要React
+也不是说不过，总体的一些基础和学习能力还行，等面试结果通知吧
+
+## 2026.2.26 京东HR面（微信域HRBP）
+1. 问一些个人信息家庭信息，还有过往实习，为什么看机会，个人职业规划等
+2. 会关心家里人有没有在京东有相关利益冲突的店等
+3. 问了下微信小程序或者端域开发的经验，还有AI相关的经验
+4. 介绍了一下京东现状，微信域整体其实还是在北京，只是面试的这个四级部门在深圳前海，有个几层楼这样，其实会推荐我先去北京感受到整个京东的氛围
+整个过程20分钟，然后说很高兴认识，应该算只是见一面这样🤔
+
+## 2026.2.26 京东交叉面（端域）
+1. 讲一个简历里的项目，还有效能优化那件事是怎样的
+2. 怎么做这种主题色的配置化和更换
+- css变量，挂载在root上或走link标签，用js替换
+3. 如果要做京东订单长列表的，有哪些需要注意的
+- 虚拟列表，不在视图内的做消除
+- 资源的防抖与懒加载，还有滚动时用requestAnimationFrame来更新位置
+4. 这两年学到的能力在哪个阶段，对于自己职业发展，希望未来写啥，顺便问了下职级和换工作的原因
+- 工作中更多的是软性能力，在沟通、讲清背景收益、汇报、写文档等，硬能力更多靠自己业务学
+反问环节，问了下面评，说总体觉得还行，前面项目介绍的挺清楚的，虽然技术栈和微信域差异挺大的，但只要不排斥就还行；还问了下跨地区沟通，是否应该选择北京base，他说倒还好，长期发展会建议北京，因为人大多都在这边。（面试官问问题的时候会笑笑，但冷脸的时候感觉还蛮吓人的）
+
+## 2026.2.27 字节一面（tiktok广告技术）
+1. 简单介绍下故障预防做了哪些事、还有聊天室场景那个项目做了哪些事
+2. vue响应式，以vue2为例，整个流程是怎样，$.set做了什么事，什么时候订阅什么时候会发布，Vue的响应式相对比React有什么优势，$.set里面具体做了什么
+- Vue2响应式原始的痛点是对象的新增属性，数组元素内容的变化和数组长度变化无法被监听，而$.set则专门对此处理，识别target为数组则用splice方法触发更新，为对象则判断其是否为响应式对象，非响应式对象则无需特殊处理，为响应式对象判断是否已存在key，已存在正常更新就好了，不存在则用defineProperty来增加响应式属性
+- Vue响应式的优点在于自动更新视图，而React则需要给予setState这样的hook去手动更新视图，且Vue只更新对应的dom节点，而React更新整个组件（但是两者性能上没差别，无论是局部更新还是直接触发组件更新，最终都会走diff算法去更新局部dom元素）
+3. 浏览器渲染的时候做了什么事，async script会defer script怎么执行的
+4. 宏任务微任务的题，说出打印顺序
+5. js异步调度器
+6. 手写lodash的防抖，有取消能力和立即执行入参
+反问环节直接问面评，代码能力没问题，但是面经八卦背的不是特别熟，但影响不是很大
+
+## 2026.3.3 百度一面
+1. 简单讲下故障预防的项目
+2. 手写一个防抖，为什么要用call去执行func
+- 因为obj.func = debounce(testFn, 300);且testFn有console.log(this.a)的时候，这个this要指向obj
+3. 题目二：bind指向
+```javascript
+const obj1 = {
+  name: 1,
+}
+const obj2 = {
+  name: 2,
+}
+function Test() {
+  console.log(this.name);
+}
+const func = Test.bind(obj1)
+func();
+func.call(obj2);
+func.apply(obj2);
+```
+- call和apply的本质是，给代理的对象加一个临时属性，让临时属性值为这个函数，然后执行
+- bind就是产生一个函数，这个函数执行的时候去调call
+- 所以相当于func = () => {return Test.call(func)}，这个时候即使obj2.func，执行结果也与obj2无关，所以输出是111
+4. 题目三：原型
+```javascript
+function Test() {
+    this.a = 1;
+    return {a: 2, b:3}
+}
+Test.prototype.a = 4;
+Test.prototype.b = 5;
+Test.prototype.c = 6;
+const ins = new Test();
+console.log(ins.a);
+console.log(ins.b);
+console.log(ins.c);
+```
+- new本质是创建一个空对象，让空对象用call的方式执行构造函数，并且让对象的__proto__指向构造函数的prototype，所以是2，3，6？不对，核心在于「构造函数有返回值就用构造函数返回值，没有就返回创建的空对象」，上述代码中函数返回值是一个全新对象，所以是访问不到Test.prototype的，要看仔细。
+5. 题目四：浏览器事件队列执行顺序，async和await和Promise是什么关系，await后面跟同步函数的话，在任务队列里是怎样的
+- 如果是同步函数的话，会用Promsie.resolve包裹作为返回值
+6. js判断数据类型的方法有哪些
+- typeof、instance of、Object.prototype.toString.call方法（面试官补充还有Array.isArray这种）
+7. webpack和vite的热更新原理,webpack的loader和plugin分别是啥
+8. cjs、mjs和umd后缀的文件分别都是啥，区别是啥
+- cjs属于基于commonjs打包的产物，对node.js的支持性较好，不支持treeshaking，运行时同步加载(require)，exports是值导出，外部改变不会影响内部
+- mjs属于基于es6 module打包的产物，对现代浏览器支持性较好，支持treeshaking，编译时加载，也能用import()做运行时异步加载，export是引用导出
+- umd是利用立即执行函数，在函数内判断当前环境支持哪种加载就走哪种，适用于要构建需要跨环境兼容的产物时
+- hmd
+9. 题目五：数组组合
+```javascript
+// 输入示例：[1,2,3,4,5,6,7], 8
+// 输出示例：[[1,7],[2,6],[3,5]]
+
+const findValue1 = (arr, val) => {
+    const n = arr.length;
+    const result = [];
+    arr.sort((a,b) => a-b);
+    for(let i=0;i<n;i++) {
+        for(let j=i;j<n;j++) {
+            if(i==j)    continue;
+            if (arr[i] + arr[j] === val) result.push([arr[i], arr[j]]);
+        }
+    }
+    return result;
+}
+// console.log(findValue1([5,4,3,2,1,6,7], 8))
+
+// 拓展
+// 输入示例：[1,2,3,4,5,6,7], 8
+// 输出所有能组合出8的集合，[1,2,5]和[5,2,1]算同一个
+const main = (arr,val) => {
+    const n = arr.length;
+    const visits = new Array(n).fill(0);
+    arr.sort((a,b) => a-b);
+    const findValue2 = (startIndex, target) => {
+        const result = [];
+        if (target < 0)    return result;
+        for(let i=startIndex;i<n;i++) {
+            if (visits[i])  continue;
+            const diff = target - arr[i];
+            if (diff === 0)   result.push(arr[i])
+            visits[i] = 1;
+            const res = findValue2(i, diff);
+            visits[i] = 0;
+            res.forEach(x => {
+                if (x.length)   result.push([arr[i], ...x]);
+                else    result.push([arr[i], x]);
+            })
+        }
+        return result;
+    }
+    return findValue2(0, val);
+}
+console.log(main([5,4,3,2,1,6,7,8,9,10,11,12], 15))
+```
+
+## 2026.3.17 OribitLabs一面（上市交易所创业小公司）
+1. 自我介绍，问项目
+2. 如果现在产品提出要做一个交易所，你会向他要什么材料，怎么设计架构、做技术选型
+- vue/react技术栈，vite/webpack打包工具，怎么做安全，接口规范怎么设计
+3. 代码题
+```javascript
+// 给你一个整数数组 `nums` 和一个整数 `k`，判断数组中是否存在两个不同的索引 `i` 和 `j`，满足：
+// - `nums == nums`
+// - `abs(i - j) <= k`
+
+// 如果存在，返回 `true`；否则，返回 `false`。
+
+// ## 示例
+
+// ```
+// 示例 1：
+// 输入：nums = [1,2,3,1], k = 3
+// 输出：true
+// 解释：nums == nums，且 abs(0 - 3) = 3 <= 3
+
+// 示例 2：
+// 输入：nums = [1,0,1,1], k = 1
+// 输出：true
+// 解释：nums == nums，且 abs(2 - 3) = 1 <= 1
+
+// 示例 3：
+// 输入：nums = [1,2,3,1,2,3], k = 2
+// 输出：false
+// 解释：最近的相同元素距离为 3，大于 k=2
+// ```
+
+function main(nums, k) {
+    const n = nums.length;
+    const set = new Set();
+    for(let i=0;i<n;i++) {
+        if(set.has(nums[i])) return true;
+        if (i-k>=0 && set.has(nums[i-k])) {
+            set.delete(nums[i-k]);
+        }
+        set.add(nums[i]);
+    }
+    return false;
+}
+console.log(main([1,2,3,1], 3));
+console.log(main([1,0,1,1], 1));
+console.log(main([1,2,3,1,2,3], 2));
+```
+4. 反问面评
+- 项目与回答的问题，很多都困在单点解决，缺乏跳脱出框架外的思考与动作
+- 讲述时缺乏结构化逻辑，不够有条理，比如应该讲实现应该先讲架构-模块组成，先全局再细节
+
+## 2026.3.18 拼多多一面（海外平台）
+1. 将js对象转换为树形结构
+```javascript
+/**
+* 请补全相关代码。
+*/
+
+function convertToTree(arr) {
+    const n = arr.length;
+    // 1.最基本的,每个元素for一遍找自己的儿子,接上,O(n2)
+    // for(let i=0;i<n;i++) {
+    //     const { id, parentId } = arr[i];
+    //     for(let j=0;j<n;j++) {
+    //         if (arr[j].parentId === id) {
+    //             const children = arr[i].children ?? [];
+    //             children.push(arr[j]);
+    //             arr[i].children = children;
+    //         }
+    //     }
+    // }
+    // 2.常见的，for两遍，O(2n)
+    const map = new Map(); // id, obj
+    for(let i=0;i<n;i++) map.set(arr[i].id, arr[i]);
+    for(let i=0;i<n;i++) {
+        if (map.has(arr[i].parentId)) {
+            const father = map.get(arr[i].parentId);
+            const children = father?.children || [];
+            children.push(arr[i]);
+            father.children = children;
+        }
+    }
+    return arr.filter(item => item.parentId === null);
+}
+
+const arr = [
+  {
+    parentId: 1,
+    id: 2,
+  },
+  {
+    parentId: null,
+    id: 1,
+  },
+  {
+    parentId: 3,
+    id: 6,
+  },
+  {
+    parentId: 1,
+    id: 3,
+  },
+  {
+    parentId: 2,
+    id: 4,
+  },
+  {
+    parentId: 2,
+    id: 5,
+  }
+];
+
+originArrStr = JSON.stringify(arr)
+console.log(JSON.stringify(convertToTree(arr), null, 2));
+console.log('是否改变了原数组：', originArrStr === JSON.stringify(arr))
+```
+2. CSRF的原理，黑客怎么模拟的post请求
+- 跨站请求伪造攻击，引导用户在黑客的网站对目标网站发起攻击，post请求攻击一般基于表单提交或者ajax完成，ajax发跨域请求只是响应的时候会被浏览器拦截，但是发还是发的出去的，至于get请求的话，img、script、iframe、link、a都可以
+
+## 2026.3.19 Minimax一面
+1. [[1,2,3], [4,5,6], [7,8,9]] => [[1,4,7],[1,4,8],[1,4,9],[2,4,7]...]，写一个函数完成转换
+```javascript
+const nums = [[1,2,3], [4,5,6], [7,8,9]];
+const main = (arr) => {
+    const n = arr.length;
+    const results = [];
+    const dfs = (nowArr, deep) => {
+        if (deep === n) {
+            results.push(nowArr);
+            return;
+        }
+        for(let i=0;i<arr[deep].length;i++) {
+            dfs(nowArr.concat(arr[deep][i]), deep+1);
+        }
+    }
+    dfs([],0);
+    return results;
+}
+console.log(main(nums));
+```
+2. Promise并发器
+```javascript
+const execFunction = (list: Array<() => Promise<any>>, maxCount = 5) => {
+    let runningCnt = 0;
+    const queue = list.slice();
+    const deal = () => {
+        while(queue.length && runningCnt < maxCount) {
+            const task = queue.shift();
+            runningCnt++;
+            task().then(() => {
+                runningCnt--;
+                deal()
+            })
+        }
+    }
+    deal();
+}
+```
+3. 讲下三个项目
+4. 反问环节
+- 面评。总体都挺正常的，对于聊天室场景下数据源没有打通表示诧异，从问题发现的角度去做智能CR挺新颖的，现在市面上大多让AI基于已有代码去做规则约束
+- 北京base的话主要做海螺视频啥的，技术栈React+NestJS，这面属于交叉面，她不在我面的团队
+
+## 2026.3.23 shein一面
+1. 介绍AI项目，问怎么让AI写的代码更符合规范，怎么做的AI的验收，怎么做的AI的CR，有没有CR自动修复的能力，整体偏探讨，我也是想到啥答啥
+2. 个人职业规划、这三年最大的挑战的事在于什么，个人竞争力（能为团队带来什么）
+- 回广东，全栈；最大挑战在于自己找到自己的课题，而不是谁给了你一个问题你把它解决了；活跃的思路，较强的执行力。
+3. 反问，团队60人，有团队在做全栈了，他们团队的业务偏后台，大家对于AI都是探索，说不上做的对不对好不好
+
+## 2026.3.25 滴滴一面（用户增长）
+1. 用迭代的方式实现快速排序
+- 反应还是太慢，在提示下只写出了递归版本的
+```javascript
+function quickSort(nums) {
+    // 1. 递归，创建额外数组
+    // if (nums.length <= 1)   return nums;
+    // const tmp = nums[0];
+    // const leftNums = [];
+    // const rightNums = [];
+    // for(let i=0;i<nums.length;i++) {
+    //     if (nums[i] > tmp) rightNums.push(nums[i]);
+    //     else if(nums[i] < tmp)    leftNums.push(nums[i]);
+    // }
+    // const x = quickSort(leftNums);
+    // const y = quickSort(rightNums);
+    // return [...x, tmp, ...y];
+
+    // 2.迭代,原数组排列
+    const n = nums.length;
+    const Stack = [];
+    const arr = nums.slice();
+    Stack.push({
+        left: 0,
+        right: n-1,
+    });
+    while(Stack.length > 0) {
+        const { left, right } = Stack.pop();
+        if (left >= right)  continue;
+        const tmp = arr[left];
+        let i=left,j=right;
+        while(i<j) {
+            while(i<j && arr[j] >= tmp) j--;
+            arr[i] = arr[j];
+            while(i<j && arr[i] < tmp)  i++;
+            arr[j] = arr[i];
+        }
+        arr[i] = tmp;
+        Stack.push({left: left,right: i-1})
+        Stack.push({left: i+1,right});
+    }
+    return arr;
+}
+console.log(quickSort([6,5,4,3,2,1,0,7]))
+```
+2. 问第一个项目和第二个项目
+3. 反问面评，除了算法其他的总体还行，具体得看部门评估了
+
+## 2026.3.27 shein二面
+1. 介绍AI项目，请求竞态项目
+2. 问还有没有AI相关的其他实践和探索（我说了T0的理念）
+3. 对shein的了解，看机会原因
+4. 反问团队人数60人，面评总体符合预期
+
+## 2026.3.31 shein 招聘HR面
+1. 对面试团队的了解多少，觉得和现在的团队有什么差异
+- 现在的团队的工作会拆的比较细
+2. 为什么看机会
+- 广东发展，当前团队职业工作上没有一些新的刺激点
+3. 了解现团队架构
+4. AI那个项目有几个人参与，怎么看的结果，工具的辐射范围，怎么做到能辐射这么多团队的
+5. 未来会怎么考虑工具的建设，现在还是工作的重点吗，未来有没有想过如何去覆盖到所有的场景
+- 工具本身的目标相对聚焦（同质性问题预防），未来的话会考虑汪端到端发展交付
+6. 实习与正式工作的体验差异
+- 大厂更重视软性能力，讲方法论、讲沟通，讲为什么做
+7. 对下一份工作的期待
+- 相对比较多元，希望能有一件我真正价值认同的事，有更好的角色去干，或者能有更多角度去看待问题，经历没经历过的事
+8. 个人信息
+
+## 2026.4.2 shein HRBP面
+1. 随便聊聊天，了解了下我的薪酬
+2. 那边10点上班，7点下班，7点后有加班津贴，午休一个半小时
+3. 争取一周内给我答复
+
+## thinking
+收到offer后，了解清楚团队架构、薪资结构、福利待遇等等，然后直接接或者思考一两天后接
+然后入职时间尽量往后推，可以用办理离职、工作交接、把公司年假休完等等原因，期间可以继续面试，然后有成的就继续接，尽量在「完全确定」后或者「完成一家公司的入职」后才做反悔的动作，反悔的时候用「个人职业规划需要重新考虑机会(比如创业或休息一段时间之类的)+希望未来还能有机会共事，保持联系」或者「临时收到了另一家公司的offer+个人职业规划考量+后续会推荐更合适的人选」
+
+## study
+面试过程中会去学一些东西，慢慢的才真正意识到自己专业能力的局限，工作两年多整体知识还是偏停滞，下面罗列一些技术点，这一行还是得多学多看，不然就落后了
+1. 微前端都有哪些框架，都是哪些原理，single-spa、qiankun、wujie，还有各大厂的微前端架构都是怎么做的
+2. pnpm是什么，相比yarn和npm呢
+3. 前端工程化的技术你都了解吗，webpack、vite、rollup、esbuild你都了解吗，什么是模块联邦
+4. 音视频基础、推拉流协议、websocket协议，这些你了解吗
+5. 源码你都读过哪些？vue源码、react源码、react18特性、react-native源码、vite源码、webpack源码、pinia源码、vue-router源码
+6. 跨端开发、小程序开发(uni-app、taro)、全栈开发(nest、docker、k8s)你都了解多少
+7. 企业级项目实践有多少？日志埋点监控平台、数字孪生平台、低代码平台等等了解过怎么做吗
+8. AI了解多少？transfermer架构原理、AI应用主流框架有哪些、大模型应用的温度是什么原理、什么是专家模型、什么是lora模型、RAG的原理、MCP和Skill的差别、spec Coding和vibe Coding的差别、rules了解过吗、Agent的记忆有哪些实现方法
+9. 架构设计懂多少？架构性思维读过吗
