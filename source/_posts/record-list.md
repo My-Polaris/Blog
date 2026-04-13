@@ -794,6 +794,66 @@ console.log(quickSort([6,5,4,3,2,1,0,7]))
 2. 那边10点上班，7点下班，7点后有加班津贴，午休一个半小时
 3. 争取一周内给我答复
 
+## 2026.4.13 腾讯微信小店
+1. 为什么公会要使用微前端
+- 巨石应用、多人协同开发能互不影响
+2. AI项目介绍
+3. SKills原理
+- 渐进式披露
+4. MCP是有状态的吗，除了Function.call还有别的方法吗
+- 我理解是没有状态的？提示词注入？
+5. SSE协议和WebSocket的区别
+- SSE没太了解，WebSocket是一个全双工协议，在聊天室、webpack、vite本地服务器上有用到
+6. Vue2和Vue3的区别
+- option-api到composition-api，响应式原理、diff算法、v-if和v-for优先级等
+7. Vue3的diff算法的时间复杂度是怎么样的
+- 看具体情况？应该蒙一个的O(nlogn)，然后说Vue2是O(n^2)
+8. AI智能CR规则工具遇到过什么问题
+- 规则生成效果不好、后端团队接入时的commit拥有人工干扰导致效果差
+9. 有过AI贯穿全流程代码的经验吗，在这块主要做功是啥
+- 有的，在这块主要做业务的上下文构建
+10. 有过移动端经验吗，觉得PC和移动端差异主要在哪
+- 移动端对性能和兼容性比较敏感，PC端主要在数据处理与操作复杂性上比较明显
+11. 性能优化策略
+12. 了解过SSR的运作流程吗
+- 只记得个水合
+13. HardMan题
+```javascript
+// 示例1: HardMan('jack').reset(10).learn('computer') => i am jack;10秒后;learning computer
+// 示例2: HardMan('jack').resetFirst(5).learn('computer') => 5秒后;i am jack;learning computer
+function HardMan(name) {
+  let promsie = Promise.resolve();
+  const talk = () => console.log(`i am ${name}`);
+  const person = {
+    reset: (time) => {
+      promsie = new Promise((resolve) => {
+        talk();
+        setTimeout(() => {
+          resolve();
+        }, time * 1000)
+      })
+      return person;
+    },
+    resetFirst: (time) => {
+      promsie = new Promise((resolve) => {
+        setTimeout(() => {
+          talk();
+          resolve();
+        }, time * 1000)
+      })
+      return person;
+    },
+    learn: (course) => {
+      promsie = promsie.then(() => {
+        console.log(`learning ${course}`)
+      })
+      return person;
+    }
+  }
+}
+```
+14. 面评：能看出来在AI做了很多方面的努力，但是底层能力还是有些欠缺，比如微前端上、MCP的底层能力上、SSE协议、SSR整个过程、vue3diff算法的复杂度，这些底层能力还是没有能答上来
+
 ## thinking
 收到offer后，了解清楚团队架构、薪资结构、福利待遇等等，然后直接接或者思考一两天后接
 然后入职时间尽量往后推，可以用办理离职、工作交接、把公司年假休完等等原因，期间可以继续面试，然后有成的就继续接，尽量在「完全确定」后或者「完成一家公司的入职」后才做反悔的动作，反悔的时候用「个人职业规划需要重新考虑机会(比如创业或休息一段时间之类的)+希望未来还能有机会共事，保持联系」或者「临时收到了另一家公司的offer+个人职业规划考量+后续会推荐更合适的人选」
