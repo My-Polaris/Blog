@@ -99,7 +99,34 @@ DeepSeek开创了**稀疏模型（Sparse Model）**，次只调用与提示词�
 | 分层记忆 | 同时维护短期滑动窗口与长期语义记忆，部分内容自动"提升"到长期存储<br><br>适用于：长上下文感知、客服 Agent | <img src="AI知识大科普/img_16.webp"/> | 优点：短信息记录，长记忆检索<br>缺点：复杂度较高（嵌入、召回）、调优链路长，难以优化 |
 | 模拟 OS 记忆管理（Swap 虚拟内存） | 类似计算机内存管理，将旧内容 page out 到外部，必要时 page in 进入上下文。对话拆分热数据（当前上下文）冷数据（外部存储）<br><br>适用于：长上下文，vibe coding（cursor 就是这么搞的） | <img src="AI知识大科普/img_17.webp"/> | 优点：灵活度较高<br>缺点：触发和分页策略 |
 
-## 2.3 MCP与Skill
+## 2.3 MCP的必要性
+
+MCP全称Model Context Protocol，就是让大模型能调用工具的一个协议，这点大家都知道。
+
+但是进阶一些的问题：MCP的底层协议是啥？能讲一下大模型和工具调用的全链路吗？MCP和Function Call的差别是啥？
+
+要想搞清楚这些，我们需要了解到当初的一些背景。
+
+工具调用初链路：大模型只有推理能力无法调用工具，解法就是由平台（比如Claude Code、VSCode）来调用工具（执行本地脚本或者通过HTTP服务调用外部工具），平台在对话的时候把自己有哪些工具告诉大模型，大模型响应要调哪些工具，平台调了之后再把结果发给大模型。
+
+Function Call：但是一开始大模型并没有那么聪明，你跟他说要调用工具请按照xxx的格式发给我，它偶尔会给你发xxy；所以OPENAI约定了Function Call，试图统一这个工具调用的数据格式（工具说明书的格式，大模型想要调用工具的数据格式）
+
+MCP：虽然大模型能调用工具了，但还有几个痛点：1. 工具说明书是平台来写，工具更新了平台还得再更新；2. 外部工具直接暴露http接口会有安全问题。
+
+- MCP协议分为「平台&工具的连接」与「平台与大模型的连接」。
+  - 平台&工具的连接：传输的数据格式定为JSON-RPC2.0，此外基于两个历史协议通信，一种是STDIO，一种是SSE，两种协议都是双工通信。
+    - STDIO只适用于Server和CLient在一台设备，Client通过stdin写入数据给服务端，服务端则通过stdout输出流返回响应给Client；
+    - SSE呢则是基于HTTP的一个协议，一条通道做长连接，一条通道服务器不断给客户端推送消息。
+  - 平台与大模型的连接：发送是HTTPS，反过来这是SSE，这是大模型一个字一个字输出的常用协议。
+
+| Function Call                               | MCP                               |
+| ------------------------------------------- | --------------------------------- |
+| <img src="AI知识大科普/function-call.png"/> | <img src="AI知识大科普/mcp.png"/> |
+
+
+
+
+## 2.4 MCP与Skill
 
 **MCP负责「连接」，Skill负责「智慧」。MCP是「厨具」，Skill是「食谱」。**
 
@@ -111,7 +138,7 @@ Skill的出现则是为了让智能体更聪明，它包含了用户的一些处
 |---|---|
 | <img src="AI知识大科普/img_18.webp"/><br><img src="AI知识大科普/img_19.webp"/> | Agent Skills 的运行方式强调**渐进式披露（Progressive Disclosure）**，从而高效管理上下文：<br><br>- **发现（Discovery）**：启动时，Agent 只加载技能的名称和描述，将 Skill List 加载到 System Prompt，用来判断技能是否相关。<br>- **激活（Activation）**：当任务匹配某个技能的描述时，Agent 会读取该技能的完整说明。<br>- **执行（Execution）**：Agent 按照说明执行任务，并在需要时加载脚本、参考资料或模板。<br><br><img src="AI知识大科普/img_20.webp"/> |
 
-## 2.4 智能体实践-Agent Coding（Claude Code、cursor）
+## 2.5 智能体实践-Agent Coding（Claude Code、cursor）
 
 ### 原理与概念
 
