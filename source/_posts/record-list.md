@@ -817,6 +817,7 @@ console.log(quickSort([6,5,4,3,2,1,0,7]))
 11. 性能优化策略
 12. 了解过SSR的运作流程吗
 - 只记得个水合
+- 1.匹配路由渲染组件、不运行生命周期函数、只运行SSR框架指定的钩子函数拉数据，然后渲染HTML返回浏览器；2. 浏览器渲染HTML，然后正常拉js bundle（框架、业务代码）；3.水合，框架正常执行，比对dom结构然后渲染，此后正式被框架接管走CSR
 13. HardMan题
 ```javascript
 // 示例1: HardMan('jack').reset(10).learn('computer') => i am jack;10秒后;learning computer
